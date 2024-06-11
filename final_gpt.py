@@ -13,8 +13,8 @@ transform = transforms.Compose([
     transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
 ])
 
-train_dataset = datasets.ImageFolder('C:/Python/dataset/train', transform=transform)
-test_dataset = datasets.ImageFolder('C:/Python/dataset/test', transform=transform)
+train_dataset = datasets.ImageFolder('/dataset/train', transform=transform)
+test_dataset = datasets.ImageFolder('/dataset/test', transform=transform)
 
 train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True)
 test_loader = DataLoader(test_dataset, batch_size=32, shuffle=False)

@@ -64,4 +64,11 @@ with torch.no_grad():
 accuracy = 100 * correct / total
 print(f"Accuracy on the test dataset: {accuracy:.2f}%")
 
-#Accuracy on the test dataset: 88.33%
+# calculat FLOPs
+from thop import profile
+from thop import clever_format
+
+input = torch.randn(1, 3, 224, 224)
+flops, params = profile(model, inputs=(input, ))
+flops, params = clever_format([flops, params], "%.3f")
+print(f"FLOPs: {flops}, Params: {params}")

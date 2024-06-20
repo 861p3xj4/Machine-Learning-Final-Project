@@ -66,3 +66,16 @@ for epoch in range(10):  # loop over the dataset multiple times
     print(f"Epoch [{epoch+1}/10], Loss: {running_loss/len(train_loader):.4f}")
 
 print('Finished Training')
+
+# 測試模型
+correct = 0
+total = 0
+with torch.no_grad():
+    for data in test_loader:
+        images, labels = data
+        outputs = model(images)
+        _, predicted = torch.max(outputs.data, 1)
+        total += labels.size(0)
+        correct += (predicted == labels).sum().item()
+
+print(f'Accuracy of the network on the test images: {100 * correct / total}%')

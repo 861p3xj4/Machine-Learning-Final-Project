@@ -4,13 +4,15 @@ import torch.optim as optim
 import torchvision.transforms as transforms
 import torchvision.datasets as datasets
 from torchvision.models import mobilenet_v2
+from torchvision.models import MobileNet_V2_Weights
 from torch.utils.data import DataLoader
+from torchvision import models
 
 # Step 2: Data Preprocessing
 transform = transforms.Compose([
     transforms.Resize((224, 224)),
     transforms.ToTensor(),
-    transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+    transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
 ])
 
 train_dataset = datasets.ImageFolder('dataset/train', transform=transform)
@@ -20,7 +22,7 @@ train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True)
 test_loader = DataLoader(test_dataset, batch_size=32, shuffle=False)
 
 # Step 3: Model Selection and Architecture
-model = mobilenet_v2(pretrained=True)
+model = models.mobilenet_v2(weights = MobileNet_V2_Weights.DEFAULT) 
 model.classifier[1] = nn.Linear(model.last_channel, 2)  # Assuming 2 classes: adults and children
 
 # Step 4: Training the Model

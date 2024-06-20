@@ -1,69 +1,68 @@
 import torch
 import torch.nn as nn
 import torch.optim as optim
-import torchvision.transforms as transforms
-import torchvision.datasets as datasets
-from torchvision.models import mobilenet_v2
-from torchvision.models import MobileNet_V2_Weights
 from torch.utils.data import DataLoader
-from torchvision import models
+from torchvision import datasets, transforms
+import torch.nn.functional as F
 
-# Step 2: Data Preprocessing
+# 定義 CNN 結構
+class SimpleCNN(nn.Module):
+    def __init__(self):
+        super(SimpleCNN, self).__init__()
+        self.conv1 = nn.Conv2d(3, 32, kernel_size=3, stride=1, padding=1)
+        self.pool = nn.MaxPool2d(kernel_size=2, stride=2)
+        self.conv2 = nn.Conv2d(32, 64, kernel_size=3, stride=1, padding=1)
+        self.fc = nn.Linear(64 * 56 * 56, 2)
+
+    def forward(self, x):
+        x = F.relu(self.conv1(x))
+        x = self.pool(x)
+        x = F.relu(self.conv2(x))
+        x = self.pool(x)
+        x = x.view(-1, 64 * 56 * 56)
+        x = self.fc(x)
+        return x
+
+# 資料預處理
 transform = transforms.Compose([
     transforms.Resize((224, 224)),
     transforms.ToTensor(),
     transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
 ])
 
+# 載入資料集
 train_dataset = datasets.ImageFolder('dataset/train', transform=transform)
 test_dataset = datasets.ImageFolder('dataset/test', transform=transform)
 
+# 建立資料加載器
 train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True)
 test_loader = DataLoader(test_dataset, batch_size=32, shuffle=False)
 
-# Step 3: Model Selection and Architecture
-model = models.mobilenet_v2(weights = MobileNet_V2_Weights.DEFAULT) 
-model.classifier[1] = nn.Linear(model.last_channel, 2)  # Assuming 2 classes: adults and children
+# 建立模型
+model = SimpleCNN()
 
-# Step 4: Training the Model
+# 定義損失函數和優化器
 criterion = nn.CrossEntropyLoss()
-optimizer = optim.Adam(model.parameters(), lr=0.001)
+optimizer = optim.SGD(model.parameters(), lr=0.001, momentum=0.9)
 
-# Training loop
-num_epochs = 10
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-model = model.to(device)
-
-for epoch in range(num_epochs):
-    model.train()
+# 訓練模型
+for epoch in range(10):  # loop over the dataset multiple times
     running_loss = 0.0
-    for images, labels in train_loader:
-        images, labels = images.to(device), labels.to(device)
-        
+    for i, data in enumerate(train_loader, 0):
+        # get the inputs; data is a list of [inputs, labels]
+        inputs, labels = data
+
+        # zero the parameter gradients
         optimizer.zero_grad()
-        outputs = model(images)
+
+        # forward + backward + optimize
+        outputs = model(inputs)
         loss = criterion(outputs, labels)
         loss.backward()
         optimizer.step()
-        
+
+        # print statistics
         running_loss += loss.item()
-    
-    print(f"Epoch [{epoch+1}/{num_epochs}], Loss: {running_loss/len(train_loader):.4f}")
+    print(f"Epoch [{epoch+1}/10], Loss: {running_loss/len(train_loader):.4f}")
 
-# Step 5: Evaluation
-model.eval()
-correct = 0
-total = 0
-
-with torch.no_grad():
-    for images, labels in test_loader:
-        images, labels = images.to(device), labels.to(device)
-        outputs = model(images)
-        _, predicted = torch.max(outputs.data, 1)
-        total += labels.size(0)
-        correct += (predicted == labels).sum().item()
-
-accuracy = 100 * correct / total
-print(f"Accuracy on the test dataset: {accuracy:.2f}%")
-
-#Accuracy on the test dataset: 88.33%
+print('Finished Training')
